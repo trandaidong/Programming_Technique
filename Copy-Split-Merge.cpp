@@ -10,10 +10,11 @@
 
 using namespace std;
 
-void CopyFile(char* pathOfSource, char* pathOfDestination) {
+bool CopyFile(char* pathOfSource, char* pathOfDestination) {
 	ifstream filein;
 	ofstream fileout;
 	filein.open(pathOfSource, ios::in | ios::binary);
+	if (!filein.is_open())return false;
 	filein.seekg(0, SEEK_END);
 	long long length = filein.tellg();// Lấy độ dài của file
 	char* content = new char[length + 1];
@@ -23,9 +24,10 @@ void CopyFile(char* pathOfSource, char* pathOfDestination) {
 	fileout.write((char*)content, sizeof(char) * length);
 	fileout.close();
 	filein.close();
+	return true;
 }
 
-void SplitFile(char* pathOfSource, char* pathOfDestination, int numPart) {
+bool SplitFile(char* pathOfSource, char* pathOfDestination, int numPart) {
 	ifstream filein;
 	ofstream fileout;
 	long long length;
@@ -34,7 +36,7 @@ void SplitFile(char* pathOfSource, char* pathOfDestination, int numPart) {
 	int lengthFileExtension = 0;
 	// Lấy độ dài của đuôi file
 	for (int i = lengthPathOfSource - 1; i >= 0; i--) {
-		if (pathOfSource[i+1] == '/')break;
+		if (pathOfSource[i + 1] == '/')break;
 		lengthFileExtension++;
 	}
 	char* fileExtension = new char[lengthFileExtension];
@@ -44,11 +46,12 @@ void SplitFile(char* pathOfSource, char* pathOfDestination, int numPart) {
 	fileExtension[lengthFileExtension] = '\0';
 
 	filein.open(pathOfSource, ios::in | ios::binary);
+	if (!filein.is_open())return false;
 	filein.seekg(0, SEEK_END);
 	length = filein.tellg();
-	if (numPart==1|| numPart >= length)return;
+	if (numPart == 1 || numPart >= length)return false;
 	long long lengthPart = (length / numPart);//773
-	char* content = new char[length+1];
+	char* content = new char[length + 1];
 	filein.seekg(0, ios::beg);
 	// Đọc toàn bộ data vào biến lưu trữ content
 	filein.read((char*)content, sizeof(char) * length);
@@ -69,7 +72,7 @@ void SplitFile(char* pathOfSource, char* pathOfDestination, int numPart) {
 		if (i < 9) {
 			strcat(nameFile, "0");
 		}
-		strcat(nameFile, convert);	
+		strcat(nameFile, convert);
 		if (i == numPart - 1) {
 			temporary = new char[(length - lengthPart * (numPart - 1)) + 1];
 			for (int j = 0; j < (length - lengthPart * (numPart - 1)); j++) {
@@ -81,7 +84,7 @@ void SplitFile(char* pathOfSource, char* pathOfDestination, int numPart) {
 			fileout.close();
 		}
 		else {
-			temporary = new char[lengthPart+1];
+			temporary = new char[lengthPart + 1];
 			for (int j = 0; j < lengthPart; j++) {
 				temporary[j] = content[i * lengthPart + j];
 				if (j == lengthPart - 1) {
@@ -91,21 +94,22 @@ void SplitFile(char* pathOfSource, char* pathOfDestination, int numPart) {
 			fileout.open(nameFile, ios::out | ios::binary);
 			fileout.write((char*)temporary, sizeof(char) * lengthPart);
 			fileout.close();
-		}	
+		}
 		delete[]temporary;
-		
+
 	}
+	return true;
 }
 
-bool MergeFile(char* pathOfPath, char* pathOfDestination){
+bool MergeFile(char* pathOfPath, char* pathOfDestination) {
 	char* contain = NULL;
 	char* containTemporary = NULL;
-	long long length=0;
+	long long length = 0;
 	long long lengthTemporary = 0;
 	int i = 0;
 	int count = 0;
 	char* convert = new char;
-	char* pathTemporary=NULL; 
+	char* pathTemporary = NULL;
 	ifstream filein;
 	ofstream fileout;
 	bool flag = true;
@@ -124,7 +128,7 @@ bool MergeFile(char* pathOfPath, char* pathOfDestination){
 		}
 		strcat(pathTemporary, convert);
 		// mở đường dẫn tạm thời 
-		filein.open(pathTemporary, ios::in| ios::binary);
+		filein.open(pathTemporary, ios::in | ios::binary);
 		if (!filein.is_open()) {
 			if (i == 1)return false;// không tồn tại file 
 			if (flag == false) {
@@ -137,14 +141,14 @@ bool MergeFile(char* pathOfPath, char* pathOfDestination){
 		else {
 			count++;// số file mở thành công
 			filein.seekg(0, SEEK_END);
-			length+= filein.tellg();
+			length += filein.tellg();
 		}
 		filein.close();
 		// xóa đi đường dẫn tạm thời 
 		delete[]pathTemporary;
 	}
-	if (count == i - 2&& i2-i1==1) {
-		contain = new char[length+1];
+	if (count == i - 2 && i2 - i1 == 1) {
+		contain = new char[length + 1];
 		long long lenTemporary;
 		for (int j = 1; j <= count; j++) {
 			pathTemporary = new char[strlen(pathOfPath) + 10];
@@ -161,7 +165,7 @@ bool MergeFile(char* pathOfPath, char* pathOfDestination){
 			filein.open(pathTemporary, ios::in | ios::binary);
 			filein.seekg(0, ios::end);
 			long long len = filein.tellg();
-			containTemporary = new char[len+1];
+			containTemporary = new char[len + 1];
 			filein.seekg(0, ios::beg);
 			filein.read((char*)containTemporary, sizeof(char) * len);
 			for (int k = 0; k < len; k++) {
@@ -185,19 +189,36 @@ bool MergeFile(char* pathOfPath, char* pathOfDestination){
 	else {
 		cout << "Error!";
 		return false;
-	}	
+	}
 }
 int main(int argc, char* argv[]) {
 	if (strcmp(argv[1], "MYCOPYFILE") == 0) {
-		CopyFile(argv[2], argv[3]);
-		cout << "\nCopy file successfully!";
+		if (argc != 4) {
+			cout << "\nUsage: MYCOPYFILE <pathOfSource> <pathOfDestination>";
+		}
+		if (CopyFile(argv[2], argv[3])) {
+			cout << "\nCopy file successfully!";
+		}
+		else {
+			cout << "\nCopy file fail!";
+		}
 	}
-	if (strcmp(argv[1], "MYSPLITFILE") == 0) {
+	if (strcmp(argv[1], "MYSPLITFILE" ) == 0) {
+		if (argc != 5) {
+			cout << "\nUsage: MYSPLITFILE <pathOfSource> <pathOfDestination> -numpart";
+		}
 		int numPart = atoi(argv[4]);
-		SplitFile(argv[2], argv[3], numPart);
-		cout << "\nSplit file successfully!";
+		if (SplitFile(argv[2], argv[3], numPart)) {
+			cout << "\nSplit file successfully!";
+		}
+		else {
+			cout << "\nSplit file fail!";
+		}
 	}
-	if (strcmp(argv[1], "MYMERGEFILE") == 0) {
+	if (strcmp(argv[1], "MYMERGEFILE") == 0&& argc==4) {
+		if (argc != 4) {
+			cout << "\nUsage: MYMERGEFILE <pathOfSource> <pathOfDestination>";
+		}
 		if (MergeFile(argv[2], argv[3])) {
 			cout << "\nMerge file successfully!";
 		}
